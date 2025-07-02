@@ -43,7 +43,7 @@ Access objects and arrays at any depth, with support for <code>id</code>-based l
 All changes made through the API are instantly written to the original data file. No database or manual saving is required.
 
 🔹 **Live Reload Mode**  
-Optional live reload syncs data file changes immediately  to memory. Great for making manual edits without restarting the server.
+Optional live reload syncs data file changes immediately to memory. Great for making manual edits without restarting the server.
 
 🔹 **Configurable via CLI**  
 Customize port, data file, log level, and toggle live reload or verbose logging using command-line flags.
@@ -292,7 +292,7 @@ DELETE /tags?value=fiction
 
 ---
 
-## 🪵 Logging
+## Logging
 
 HSON Server includes structured, styled logging powered by [Charmbracelet Logger](https://charm.sh/blog/the-charm-logger/), with rich metadata and dynamic verbosity options.
 
@@ -361,7 +361,7 @@ Each cleaned path is logged transparently for debugging purposes.
 
 ---
 
-## 🧪 Use Cases
+## Use Cases
 
 HSON Server is ideal for a variety of development and testing scenarios:
 
