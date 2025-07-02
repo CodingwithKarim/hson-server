@@ -25,10 +25,14 @@ func parseQuery(qs url.Values) QueryOptions {
 				}
 				opts.SortKey = v
 			}
-		case "offset":
-			opts.Offset, _ = strconv.Atoi(v)
 		case "limit":
 			opts.Limit, _ = strconv.Atoi(v)
+		case "page":
+			if page, err := strconv.Atoi(v); err == nil && page > 0 && opts.Limit > 0 {
+				opts.Offset = (page - 1) * opts.Limit
+			}
+		case "offset":
+			opts.Offset, _ = strconv.Atoi(v)
 		default:
 			if v != "" {
 				opts.Filters[key] = v
