@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"hson-server/internal/app"
 	"hson-server/internal/logger"
 	"hson-server/internal/router"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync/atomic"
 	"syscall"
 
@@ -16,11 +18,21 @@ import (
 )
 
 func main() {
+	// Setup logger singleton that can be accessed by entire app
+	logger.Setup()
+
 	// Parse command-line flags to get the HSON file path, server port to listen on, and live-reloading option
 	dbPath, serverPort, liveReload := parseAppFlags()
 
-	// Setup logger singleton that can be accessed by entire app
-	logger.Setup()
+	// Resolve the db file path to an absolute path
+	resolvedPath, err := resolveDataFile(dbPath)
+
+	if err != nil {
+		logger.Fatal("Failed to resolve data file path", "err", err)
+	}
+
+	// Update the dbPath to the updated absolute path
+	dbPath = resolvedPath
 
 	// Init the app struct
 	app := &app.App{
@@ -91,6 +103,35 @@ func parseAppFlags() (dbPath, serverPort string, liveReload bool) {
 	flag.Parse()
 
 	return
+}
+
+func resolveDataFile(dbPath string) (string, error) {
+	if dbPath != "data.hson" {
+		return dbPath, nil
+	}
+
+	if _, err := os.Stat("data.hson"); err == nil {
+		abs, err := filepath.Abs("data.hson")
+		if err != nil {
+			return "", err
+		}
+		return abs, nil
+	}
+
+	exePath, err := os.Executable()
+
+	if err != nil {
+		return "", err
+	}
+
+	exeDir := filepath.Dir(exePath)
+	fallback := filepath.Join(exeDir, "data.hson")
+
+	if _, err := os.Stat(fallback); err == nil {
+		return fallback, nil
+	}
+
+	return "", fmt.Errorf("No data.hson found in cwd or executable directory. Please specify a path to your HSON file using the --db or --database flag.")
 }
 
 func watchHSONFile(app *app.App) {
