@@ -1,9 +1,11 @@
 package router
 
 import (
+	"hson-server/internal/logger"
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 )
 
 // HSONStore defines operations for reading/writing HSON data
@@ -23,7 +25,7 @@ func NewHTTPHandler(store HSONStore) http.Handler {
 	handler.HandleFunc("/", handlerDispatcher(store))
 
 	// Return the configured router
-	return addCORSAndNormalizeURL(handler)
+	return addCORSAndNormalizeURL(addDelay(handler))
 }
 
 // Depending on the HTTP verb, we will dispatch its equivalent handler function
@@ -66,5 +68,53 @@ func addCORSAndNormalizeURL(next http.Handler) http.Handler {
 
 		// Call the next handler
 		next.ServeHTTP(w, r)
+	})
+}
+
+func addDelay(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		delayString := r.URL.Query().Get("delay")
+
+		if delayString == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		duration, err := time.ParseDuration(delayString)
+
+		if err != nil {
+			logger.Error("Failed to parse delay duration",
+				"value", delayString,
+				"err", err,
+			)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if duration <= 0 {
+			logger.Warn("Invalid delay duration",
+				"value", delayString,
+			)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if duration > time.Minute {
+			logger.Warn("Delay duration too long",
+				"requested_duration", duration,
+				"adjusted_to", time.Minute,
+			)
+			duration = time.Minute
+		}
+
+		select {
+		case <-time.After(duration):
+			next.ServeHTTP(w, r)
+		case <-r.Context().Done():
+			logger.Info("Request cancelled by client during delay",
+				"requested_duration", duration,
+			)
+			return
+		}
 	})
 }
