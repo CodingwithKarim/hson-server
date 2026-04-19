@@ -7,7 +7,7 @@
 
 ---
 
-**HSON Server** is a flexible HTTP server that loads data from a local .hson, .json, .txt, or any HJSON-compatible file, and instantly spins up a live REST API. Designed as a drop-in replacement for the popular <a href="https://json-server.dev/" target="_blank">json-server</a>, it supports deep nesting, advanced filtering, automatic file updates, live reload support, and styled logs powered by <a href="https://charm.sh/blog/the-charm-logger/" target="_blank">Charmbracelet</a>.
+**HSON Server** is a flexible HTTP server that loads data from a local .hson, .json, .txt, or any HJSON-compatible file, and instantly spins up a live REST API. Designed as a drop-in replacement for the popular <a href="https://json-server.dev/" target="_blank">json-server</a>, it supports deep nesting, advanced filtering, automatic file updates, live reload support, optional latency simulation, and styled logs powered by <a href="https://charm.sh/blog/the-charm-logger/" target="_blank">Charmbracelet</a>.
 
 No database setup. No schemas. Just point it at a file and run the server.
 
@@ -162,19 +162,20 @@ GET /users/42/posts  → Nested resource (supports deep nesting)
 Advanced query parameters allow filtering, sorting, and pagination on any collection or array.
 
 ```http
-GET /[collection]?[key]=[value]&sort=[field]&limit=[N]&offset=[K]
+GET /[collection]?[key]=[value]&sort=[field]&limit=[N]&offset=[K]&delay[duration]
 ```
 
 #### 🧩 Supported Parameters
 
-| Parameter           | Description                                                                 |
-|---------------------|-----------------------------------------------------------------------------|
+| Parameter           | Description                                                                |
+|---------------------|----------------------------------------------------------------------------|
 | `?key=value`        | Filter results by matching any field or value.                             |
 | `?value=foo`        | Match against primitive values or object fields equal to `foo`.            |
 | `?sort=key`         | Sort results in ascending order by `key`.                                  |
 | `?sort=-key`        | Sort results in descending order by `key`.                                 |
 | `?page=N&limit=M`   | Paginate results using page-based logic (1-indexed).                       |
 | `?offset=K&limit=M` | Paginate using offset-based logic (0-indexed).                             |
+| `?delay=2s`         | Delay request processing to simulate network latency.                      |
 
 #### ▶️ Filtering Examples
 
@@ -183,6 +184,7 @@ GET /books?author=Asimov
 GET /users?role=admin
 GET /products?inStock=true
 GET /tags?0=fiction
+GET /users?delay=5s
 ```
 ---
 
@@ -372,10 +374,10 @@ HSON Server is ideal for a variety of development and testing scenarios:
   → Mock out a backend using a local `.hson` or any HJSON compatible file. No DB or separate backend service required.
 
 - **API Mocking for Testing**
-  → Simulate REST APIs with full CRUD support, nested paths, and advanced filters using a simple data file.
+  → Simulate REST APIs with full CRUD support, nested paths, advanced filters, and controllable response delays using a simple data file.
 
 - **Live API Demos**
-  → Build interactive UI demos with a realistic backend feel using live data updates and structured logs without trouble of building backend service.
+  → Build interactive UI demos with a realistic backend feel using live data updates, structured logs, and optional latency simulation.
 
 - **Teaching / Workshops**
   → Use simple HJSON files to teach REST API principles and JSON request/response structure without deploying backend service.
