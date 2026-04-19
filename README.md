@@ -54,6 +54,9 @@ Clean, structured logs powered by <a href="https://charm.sh/blog/the-charm-logge
 🔹 **Clean Middleware & Routing**  
 Automatically normalizes messy or invalid paths like <code>////api////books///1///</code> into clean, valid routes like <code>/api/books/1</code>.
 
+🔹 **Response Delay (Latency Simulation)**
+Simulate network latency by adding a delay query parameter to any request (e.g. ?delay=2s). The server waits before processing, helping test loading states and slow network behavior. Supports standard Go duration formats with built-in safety and cancellation handling.
+
 ---
 
 ## Getting Started
