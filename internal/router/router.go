@@ -84,7 +84,7 @@ func addDelay(next http.Handler) http.Handler {
 
 		if err != nil {
 			logger.Error("Failed to parse delay duration",
-				"value", delayString,
+				"delay_string", delayString,
 				"err", err,
 			)
 			next.ServeHTTP(w, r)
@@ -93,7 +93,8 @@ func addDelay(next http.Handler) http.Handler {
 
 		if duration <= 0 {
 			logger.Warn("Invalid delay duration",
-				"value", delayString,
+				"delay_string", delayString,
+				"delay", duration,
 			)
 			next.ServeHTTP(w, r)
 			return
@@ -101,7 +102,8 @@ func addDelay(next http.Handler) http.Handler {
 
 		if duration > time.Minute {
 			logger.Warn("Delay duration too long",
-				"requested_duration", duration,
+				"delay_string", delayString,
+				"delay", duration,
 				"adjusted_to", time.Minute,
 			)
 			duration = time.Minute
@@ -112,7 +114,8 @@ func addDelay(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		case <-r.Context().Done():
 			logger.Info("Request cancelled by client during delay",
-				"requested_duration", duration,
+				"delay_string", delayString,
+				"delay", duration,
 			)
 			return
 		}
