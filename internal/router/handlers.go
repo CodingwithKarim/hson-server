@@ -6,6 +6,7 @@ import (
 	"hson-server/internal/logger"
 	"net/http"
 	"path"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -79,6 +80,7 @@ func handleGetRequest(store HSONStore) http.HandlerFunc {
 			"status", status,
 			"raw_count", dataCount,
 			"filtered_count", filteredDataCount,
+			"value_type", reflect.TypeOf(filteredData).Kind(),
 			"request_duration", time.Since(start),
 		)
 	}
