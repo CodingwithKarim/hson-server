@@ -151,22 +151,35 @@ func watchHSONFile(app *app.App) {
 		return
 	}
 
-	// Loop through the watcher events indefintely
-	for ev := range watcher.Events {
-		// Only monitor write events and ensure update did not come from code / app.Persist() call
-		if ev.Op&fsnotify.Write == 0 || atomic.LoadUint32(&app.SelfWriting) == 1 {
-			continue
+	for {
+		select {
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				logger.Warn("Watcher channel closed, live reload disabled")
+				return
+			}
+
+			if err != nil {
+				logger.Error("Watcher error", "err", err)
+			}
+
+		case ev, ok := <-watcher.Events:
+			if !ok {
+				logger.Warn("Watcher channel closed, live reload disabled")
+				return
+			}
+
+			// Only monitor write events and ensure update did not come from code / app.Persist() call
+			if ev.Op&fsnotify.Write == 0 || atomic.LoadUint32(&app.SelfWriting) == 1 {
+				continue
+			}
+
+			logger.Info("Reloading HSON from disk")
+
+			// Load data from HSON file to app memory
+			if err := app.LoadDataFromFile(); err != nil {
+				logger.Error("Reload failed", "err", err)
+			}
 		}
-
-		logger.Info("Reloading HSON from disk")
-
-		// Load data from HSON file to app memory
-		if err := app.LoadDataFromFile(); err != nil {
-			logger.Error("Reload failed", "err", err)
-		}
-	}
-
-	if err := <-watcher.Errors; err != nil {
-		logger.Error("Watcher error", "err", err)
 	}
 }
