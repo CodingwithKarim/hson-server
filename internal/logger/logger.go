@@ -12,52 +12,55 @@ import (
 	"github.com/muesli/termenv"
 )
 
-var (
-	LogLevel  string
-	Verbose   bool
-	startTime = time.Now()
+type loggerInstance struct {
 	logger    *log.Logger
-)
+	verbose   bool
+	startTime time.Time
+}
 
-func Setup() {
-	logger = log.NewWithOptions(os.Stdout, log.Options{
-		ReportCaller:    Verbose,
-		ReportTimestamp: Verbose,
-		Level:           parseLogLevel(LogLevel),
+var instance *loggerInstance
+
+func SetupSingleton(logLevel string, isVerbose bool) {
+	charmLogger := log.NewWithOptions(os.Stdout, log.Options{
+		ReportCaller:    isVerbose,
+		ReportTimestamp: isVerbose,
+		Level:           parseLogLevel(logLevel),
 		TimeFormat:      time.Kitchen,
 		Prefix:          lipgloss.NewStyle().Render("🚀 HSON Server"),
 		CallerFormatter: getCallerFormatter(),
 		CallerOffset:    1,
 	})
 
-	logger.SetColorProfile(termenv.TrueColor)
-	logger.SetStyles(customLogStyles())
+	charmLogger.SetColorProfile(termenv.TrueColor)
+	charmLogger.SetStyles(customLogStyles())
+
+	instance = &loggerInstance{
+		logger:    charmLogger,
+		verbose:   isVerbose,
+		startTime: time.Now(),
+	}
 }
 
-func Debug(msg string, kv ...any) { logMessage(log.DebugLevel, msg, kv...) }
-func Info(msg string, kv ...any)  { logMessage(log.InfoLevel, msg, kv...) }
-func Warn(msg string, kv ...any)  { logMessage(log.WarnLevel, msg, kv...) }
-func Error(msg string, kv ...any) { logMessage(log.ErrorLevel, msg, kv...) }
-func Fatal(msg string, keyvals ...any) {
-	logMessage(log.FatalLevel, msg, keyvals...)
+func Debug(msg string, kv ...any)      { instance.logMessage(log.DebugLevel, msg, kv...) }
+func Info(msg string, kv ...any)       { instance.logMessage(log.InfoLevel, msg, kv...) }
+func Warn(msg string, kv ...any)       { instance.logMessage(log.WarnLevel, msg, kv...) }
+func Error(msg string, kv ...any)      { instance.logMessage(log.ErrorLevel, msg, kv...) }
+func Fatal(msg string, keyvals ...any) { instance.logMessage(log.FatalLevel, msg, keyvals...) }
 
-	os.Exit(1)
-}
-
-func logMessage(level log.Level, msg string, keyvals ...any) {
+func (l *loggerInstance) logMessage(level log.Level, msg string, keyvals ...any) {
 	fields := append([]any(nil), keyvals...)
 
-	if Verbose {
+	if l.verbose {
 		fields = append(fields,
-			"uptime", time.Since(startTime).String(),
+			"uptime", time.Since(l.startTime).String(),
 			"pid", os.Getpid(),
 			"goroutines", runtime.NumGoroutine(),
 		)
 	}
 
-	logger.Log(level, msg, fields...)
+	l.logger.Log(level, msg, fields...)
 
-	if level >= logger.GetLevel() {
+	if level >= l.logger.GetLevel() {
 		fmt.Println()
 	}
 }

@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"flag"
 	"fmt"
 	"hson-server/internal/utils"
 	"path/filepath"
@@ -10,11 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
-
-func RegisterFlags() {
-	flag.StringVar(&LogLevel, "log-level", "info", "log level: debug, info, warn, error")
-	flag.BoolVar(&Verbose, "verbose", false, "enable verbose logging (adds file and line number and extra fields)")
-}
 
 func parseLogLevel(logLevel string) log.Level {
 	switch strings.ToLower(logLevel) {

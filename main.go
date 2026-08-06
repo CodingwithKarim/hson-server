@@ -18,17 +18,18 @@ import (
 )
 
 func main() {
-	// Setup logger singleton that can be accessed by entire app
-	logger.Setup()
-
 	// Parse command-line flags to get the HSON file path, server port to listen on, and live-reloading option
-	dbPath, serverPort, liveReload := parseAppFlags()
+	dbPath, serverPort, logLevel, liveReload, isLogVerbose := parseAppFlags()
+
+	// Setup logger singleton that can be accessed by entire app
+	logger.SetupSingleton(logLevel, isLogVerbose)
 
 	// Resolve the db file path to an absolute path
 	resolvedPath, err := resolveDataFile(dbPath)
 
 	if err != nil {
 		logger.Fatal("Failed to resolve data file path", "err", err)
+		os.Exit(1)
 	}
 
 	// Update the dbPath to the updated absolute path
@@ -43,6 +44,7 @@ func main() {
 	// Load data from the HSON file into memory / app.Data
 	if err := app.LoadDataFromFile(); err != nil {
 		logger.Fatal("Failed to access the database file", "path", dbPath, "err", err)
+		os.Exit(1)
 	}
 
 	// Only watch HSON / data file for updates if live reload was requested
@@ -67,6 +69,7 @@ func main() {
 		// Start serving HTTP requests
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("HSON Server failed to listen and serve", "port", serverPort, "err", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -89,20 +92,20 @@ func main() {
 	}
 }
 
-func parseAppFlags() (dbPath, serverPort string, liveReload bool) {
+func parseAppFlags() (dbPath, serverPort, logLevel string, liveReload, isLogVerbose bool) {
 	// Register cli flags for configuring server e.g: port, hson file path, live-reloading, etc...
 	flag.StringVar(&dbPath, "db", "data.hson", "path to your HSON database file")
 	flag.StringVar(&dbPath, "database", "data.hson", "alias for --db")
 	flag.StringVar(&serverPort, "port", "3000", "port the server will listen on")
 	flag.BoolVar(&liveReload, "live-reload", false, "watch HSON file and reload on external changes")
 
-	// Register cli flags for logger e.g: log level, verbose option
-	logger.RegisterFlags()
+	flag.StringVar(&logLevel, "log-level", "info", "log level: debug, info, warn, error")
+	flag.BoolVar(&isLogVerbose, "verbose", false, "enable verbose logging (adds file and line number and extra fields)")
 
 	// Parse all registered command-line flags
 	flag.Parse()
 
-	return
+	return dbPath, serverPort, logLevel, liveReload, isLogVerbose
 }
 
 func resolveDataFile(dbPath string) (string, error) {
