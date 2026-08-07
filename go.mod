@@ -6,6 +6,8 @@ require github.com/fsnotify/fsnotify v1.9.0
 
 require github.com/hjson/hjson-go/v4 v4.6.0
 
+require github.com/joho/godotenv v1.5.1
+
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/colorprofile v0.2.3-0.20250311203215-f60798e515dc // indirect

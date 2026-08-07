@@ -1,0 +1,4 @@
+localhost:{$HSON_HTTPS_PORT} {
+    tls internal
+    reverse_proxy localhost:{$HSON_PORT}
+}

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/hjson/hjson-go/v4"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -25,6 +27,8 @@ type AuthConfig struct {
 }
 
 func Load() (*Config, error) {
+	_ = godotenv.Load()
+
 	cfg := parseAppFlags()
 
 	resolvedPath, err := resolveDataFile(cfg.DBPath)
@@ -63,16 +67,48 @@ func loadAuthData(cfg *Config) error {
 func parseAppFlags() *Config {
 	cfg := &Config{}
 
-	// Register cli flags for configuring server e.g: port, hson file path, live-reloading, etc...
-	flag.StringVar(&cfg.DBPath, "db", "data.hson", "path to your HSON database file")
-	flag.StringVar(&cfg.DBPath, "database", "data.hson", "alias for --db")
-	flag.StringVar(&cfg.ServerPort, "port", "3000", "port the server will listen on")
-	flag.BoolVar(&cfg.LiveReload, "live-reload", false, "watch HSON file and reload on external changes")
+	flag.StringVar(
+		&cfg.DBPath,
+		"db",
+		envOrDefault("HSON_DB_PATH", "data.hson"),
+		"path to your HSON database file",
+	)
 
-	flag.StringVar(&cfg.LogLevel, "log-level", "info", "log level: debug, info, warn, error")
-	flag.BoolVar(&cfg.IsLogVerbose, "verbose", false, "enable verbose logging (adds file and line number and extra fields)")
+	flag.StringVar(
+		&cfg.DBPath,
+		"database",
+		envOrDefault("HSON_DB_PATH", "data.hson"),
+		"alias for --db",
+	)
 
-	// Parse all registered command-line flags
+	flag.StringVar(
+		&cfg.ServerPort,
+		"port",
+		envOrDefault("HSON_PORT", "3000"),
+		"port the server will listen on",
+	)
+
+	flag.BoolVar(
+		&cfg.LiveReload,
+		"live-reload",
+		envBoolOrDefault("HSON_LIVE_RELOAD", false),
+		"watch HSON file and reload on external changes",
+	)
+
+	flag.StringVar(
+		&cfg.LogLevel,
+		"log-level",
+		envOrDefault("HSON_LOG_LEVEL", "info"),
+		"log level: debug, info, warn, error",
+	)
+
+	flag.BoolVar(
+		&cfg.IsLogVerbose,
+		"verbose",
+		envBoolOrDefault("HSON_VERBOSE", false),
+		"enable verbose logging (adds file and line number and extra fields)",
+	)
+
 	flag.Parse()
 
 	return cfg
@@ -105,4 +141,28 @@ func resolveDataFile(dbPath string) (string, error) {
 	}
 
 	return "", fmt.Errorf("No data.hson found in cwd or executable directory. Please specify a path to your HSON file using the --db or --database flag.")
+}
+
+func envOrDefault(key, fallback string) string {
+	value := os.Getenv(key)
+
+	if value == "" {
+		return fallback
+	}
+	return value
+}
+
+func envBoolOrDefault(key string, fallback bool) bool {
+	value := os.Getenv(key)
+
+	if value == "" {
+		return fallback
+	}
+
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return fallback
+	}
+
+	return parsed
 }
