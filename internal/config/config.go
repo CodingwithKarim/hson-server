@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/hjson/hjson-go/v4"
 )
 
 type Config struct {
@@ -13,19 +15,49 @@ type Config struct {
 	LogLevel     string
 	LiveReload   bool
 	IsLogVerbose bool
+	Auth         *AuthConfig
+}
+
+type AuthConfig struct {
+	Enabled         bool     `json:"enabled"`
+	APIKey          string   `json:"apiKey"`
+	ProtectedRoutes []string `json:"protectedRoutes"`
 }
 
 func Load() (*Config, error) {
 	cfg := parseAppFlags()
 
 	resolvedPath, err := resolveDataFile(cfg.DBPath)
+
 	if err != nil {
 		return nil, err
 	}
 
 	cfg.DBPath = resolvedPath
 
+	if err := loadAuthData(cfg); err != nil {
+		return nil, err
+	}
+
 	return cfg, nil
+}
+
+func loadAuthData(cfg *Config) error {
+	raw, err := os.ReadFile("auth.hson")
+
+	if err != nil {
+		return err
+	}
+
+	var data AuthConfig
+
+	if err := hjson.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+
+	cfg.Auth = &data
+
+	return nil
 }
 
 func parseAppFlags() *Config {

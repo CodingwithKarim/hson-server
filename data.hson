@@ -33,12 +33,12 @@
 
   users: [
     {
-      username: "jdoe"
-      role: "admin"
+      id: 1
+      username: "hakim"
     }
   ]
 
   settings: {
-    maintenance: false
+    maintenance: true
   }
 }

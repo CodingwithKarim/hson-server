@@ -8,7 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/hjson/hjson-go"
+	"github.com/hjson/hjson-go/v4"
 )
 
 type App struct {

@@ -105,3 +105,13 @@ func countItems(data any) int {
 		return 1
 	}
 }
+
+func isProtectedRoute(rootPath string, protectedRoutes []string) bool {
+	for _, route := range protectedRoutes {
+		if rootPath == route || strings.HasPrefix(rootPath, route+"/") {
+			return true
+		}
+	}
+
+	return false
+}

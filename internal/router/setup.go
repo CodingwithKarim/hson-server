@@ -1,6 +1,7 @@
 package router
 
 import (
+	"hson-server/internal/config"
 	"net/http"
 	"net/url"
 )
@@ -14,15 +15,20 @@ type HSONStore interface {
 	Patch(path string, patchData map[string]any) error
 }
 
-func NewHTTPHandler(store HSONStore) http.Handler {
+func NewHTTPHandler(store HSONStore, authConfig *config.AuthConfig) http.Handler {
 	// Assemble a HTTP multiplexer (router)
 	handler := http.NewServeMux()
 
 	// Register a dispatcher function at the root path
 	handler.HandleFunc("/", handlerDispatcher(store))
 
-	// Return the configured router
-	return addCORSAndNormalizeURL(addDelay(handler))
+	// Return the configured router with CORS, authentication, and delay middleware applied
+	return addCORSAndNormalizeURL(
+		addAuth(
+			addDelay(handler),
+			authConfig,
+		),
+	)
 }
 
 // Depending on the HTTP verb, we will dispatch its equivalent handler function

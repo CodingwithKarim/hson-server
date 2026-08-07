@@ -1,0 +1,9 @@
+{
+    enabled: true,
+
+    protectedRoutes: [
+   
+    ]
+
+    apiKey: "my-local-api-key"
+}

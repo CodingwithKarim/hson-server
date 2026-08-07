@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Parse command-line flags to get the HSON file path, server port to listen on, and live-reloading option
+	// Parse command-line flags to get the HSON file path, server port to listen on, live-reloading option, and auth settings
 	cfg, err := config.Load()
 
 	if err != nil {
@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// Init HTTP router / handler that handles incoming requests and dispatches actions based on HTTP verb
-	handler := router.NewHTTPHandler(app)
+	handler := router.NewHTTPHandler(app, cfg.Auth)
 
 	// Init a HTTP server using the specified port and router
 	server := &http.Server{

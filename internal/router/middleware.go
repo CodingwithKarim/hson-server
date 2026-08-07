@@ -1,11 +1,46 @@
 package router
 
 import (
+	"hson-server/internal/config"
 	"hson-server/internal/logger"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 )
+
+func addAuth(next http.Handler, authConfig *config.AuthConfig) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !authConfig.Enabled || !isProtectedRoute(r.URL.Path, authConfig.ProtectedRoutes) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		authHeader := r.Header.Get("Authorization")
+
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			logger.Error("Bearer prefix is missing from authorization header", "auth_header", authHeader, "url_path", r.URL.Path)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		apiKeyFromHeader := strings.TrimPrefix(authHeader, "Bearer ")
+
+		if apiKeyFromHeader == "" {
+			logger.Error("Bearer api key is missing from authorization header", "auth_header", authHeader, "url_path", r.URL.Path)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		if apiKeyFromHeader != authConfig.APIKey {
+			logger.Error("Invalid bearer api key", "auth_header", authHeader, "url_path", r.URL.Path, "api_key_from_header", apiKeyFromHeader, "expected_api_key", authConfig.APIKey)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func addCORSAndNormalizeURL(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
