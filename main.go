@@ -2,55 +2,45 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"hson-server/internal/app"
+	"hson-server/internal/config"
 	"hson-server/internal/logger"
 	"hson-server/internal/router"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"sync/atomic"
 	"syscall"
-
-	"github.com/fsnotify/fsnotify"
 )
 
 func main() {
 	// Parse command-line flags to get the HSON file path, server port to listen on, and live-reloading option
-	dbPath, serverPort, logLevel, liveReload, isLogVerbose := parseAppFlags()
-
-	// Setup logger singleton that can be accessed by entire app
-	logger.SetupSingleton(logLevel, isLogVerbose)
-
-	// Resolve the db file path to an absolute path
-	resolvedPath, err := resolveDataFile(dbPath)
+	cfg, err := config.Load()
 
 	if err != nil {
-		logger.Fatal("Failed to resolve data file path", "err", err)
+		fmt.Printf("failed to load configuration from environment or flags: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Update the dbPath to the updated absolute path
-	dbPath = resolvedPath
+	// Setup logger singleton that can be accessed by entire app
+	logger.SetupSingleton(cfg.LogLevel, cfg.IsLogVerbose)
 
 	// Init the app struct
 	app := &app.App{
 		Data:     map[string]any{},
-		FilePath: dbPath,
+		FilePath: cfg.DBPath,
 	}
 
 	// Load data from the HSON file into memory / app.Data
 	if err := app.LoadDataFromFile(); err != nil {
-		logger.Fatal("Failed to access the database file", "path", dbPath, "err", err)
+		logger.Fatal("Failed to access the database file", "path", cfg.DBPath, "err", err)
 		os.Exit(1)
 	}
 
 	// Only watch HSON / data file for updates if live reload was requested
-	if liveReload {
-		go watchHSONFile(app)
-		logger.Info("Live‐reload enabled: watching", "file", dbPath)
+	if cfg.LiveReload {
+		go config.WatchHSONFile(app)
+		logger.Info("Live‐reload enabled: watching", "file", cfg.DBPath)
 	}
 
 	// Init HTTP router / handler that handles incoming requests and dispatches actions based on HTTP verb
@@ -58,17 +48,17 @@ func main() {
 
 	// Init a HTTP server using the specified port and router
 	server := &http.Server{
-		Addr:    ":" + serverPort,
+		Addr:    ":" + cfg.ServerPort,
 		Handler: handler,
 	}
 
 	// Start the HTTP server in a background goroutine so can handle shutdown signals below
 	go func() {
-		logger.Info("Starting HSON Server", "port", serverPort, "data file", dbPath)
+		logger.Info("Starting HSON Server", "port", cfg.ServerPort, "data file", cfg.DBPath)
 
 		// Start serving HTTP requests
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("HSON Server failed to listen and serve", "port", serverPort, "err", err)
+			logger.Fatal("HSON Server failed to listen and serve", "port", cfg.ServerPort, "err", err)
 			os.Exit(1)
 		}
 	}()
@@ -89,100 +79,5 @@ func main() {
 		logger.Error("Graceful shutdown failed, forcing exit", "err", err)
 	} else {
 		logger.Info("🌙  HSON Server shutdown complete. See you next time!")
-	}
-}
-
-func parseAppFlags() (dbPath, serverPort, logLevel string, liveReload, isLogVerbose bool) {
-	// Register cli flags for configuring server e.g: port, hson file path, live-reloading, etc...
-	flag.StringVar(&dbPath, "db", "data.hson", "path to your HSON database file")
-	flag.StringVar(&dbPath, "database", "data.hson", "alias for --db")
-	flag.StringVar(&serverPort, "port", "3000", "port the server will listen on")
-	flag.BoolVar(&liveReload, "live-reload", false, "watch HSON file and reload on external changes")
-
-	flag.StringVar(&logLevel, "log-level", "info", "log level: debug, info, warn, error")
-	flag.BoolVar(&isLogVerbose, "verbose", false, "enable verbose logging (adds file and line number and extra fields)")
-
-	// Parse all registered command-line flags
-	flag.Parse()
-
-	return dbPath, serverPort, logLevel, liveReload, isLogVerbose
-}
-
-func resolveDataFile(dbPath string) (string, error) {
-	if dbPath != "data.hson" {
-		return dbPath, nil
-	}
-
-	if _, err := os.Stat("data.hson"); err == nil {
-		abs, err := filepath.Abs("data.hson")
-		if err != nil {
-			return "", err
-		}
-		return abs, nil
-	}
-
-	exePath, err := os.Executable()
-
-	if err != nil {
-		return "", err
-	}
-
-	exeDir := filepath.Dir(exePath)
-	fallback := filepath.Join(exeDir, "data.hson")
-
-	if _, err := os.Stat(fallback); err == nil {
-		return fallback, nil
-	}
-
-	return "", fmt.Errorf("No data.hson found in cwd or executable directory. Please specify a path to your HSON file using the --db or --database flag.")
-}
-
-func watchHSONFile(app *app.App) {
-	// Init the live reload watcher
-	watcher, err := fsnotify.NewWatcher()
-
-	if err != nil {
-		logger.Error("Live Reload Watcher initialization failed", "err", err)
-		return
-	}
-
-	defer watcher.Close()
-
-	// Start monitoring file path using watcher
-	if err := watcher.Add(app.FilePath); err != nil {
-		logger.Error("Watcher.Add failed", "path", app.FilePath, "err", err)
-		return
-	}
-
-	for {
-		select {
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				logger.Warn("Watcher channel closed, live reload disabled")
-				return
-			}
-
-			if err != nil {
-				logger.Error("Watcher error", "err", err)
-			}
-
-		case ev, ok := <-watcher.Events:
-			if !ok {
-				logger.Warn("Watcher channel closed, live reload disabled")
-				return
-			}
-
-			// Only monitor write events and ensure update did not come from code / app.Persist() call
-			if ev.Op&fsnotify.Write == 0 || atomic.LoadUint32(&app.SelfWriting) == 1 {
-				continue
-			}
-
-			logger.Info("Reloading HSON from disk")
-
-			// Load data from HSON file to app memory
-			if err := app.LoadDataFromFile(); err != nil {
-				logger.Error("Reload failed", "err", err)
-			}
-		}
 	}
 }
