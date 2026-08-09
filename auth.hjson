@@ -1,0 +1,40 @@
+{
+    // Enable or disable authentication
+    enabled: true,
+
+    // Supported: basic, bearer, api-key, cookie
+    type: "cookie",
+
+    // Routes that require authentication
+    protectedRoutes: [
+        "/settings"
+    ],
+
+    // Basic authentication
+    basic: {
+        // Authorization: Basic <base64(username:password)>
+        username: "admin",
+        password: "password"
+    }
+
+    // Bearer token authentication
+    bearer: {
+        // Authorization: Bearer <token>
+        token: "my-local-api-key"
+    },
+     api-key: {
+        // Request header containing the API key.
+        header: "X-API-Key",
+        value: "my-local-api-key"
+    }
+
+    // Cookie authentication.
+    cookie: {
+        // Route that issues the authentication cookie.
+        issueRoute: "/auth/cookie",
+
+        // Cookie sent back to the client which will also verified by server if auth type is cookie.
+        name: "session",
+        value: "my-local-session"
+    }
+}
