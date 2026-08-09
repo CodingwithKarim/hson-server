@@ -95,7 +95,7 @@ func Delete(root any, urlPath string) error {
 	// Split URL into separate segments | e.g: `/api/items/0` => [api, items, 0]
 	urlParts := splitPath(urlPath)
 
-	// Dont allow client to delete whole hson document by making DELETE request to root
+	// Dont allow client to delete whole hjson document by making DELETE request to root
 	if len(urlParts) == 0 {
 		return ErrNotFound
 	}

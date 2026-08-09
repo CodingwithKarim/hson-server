@@ -1,8 +1,8 @@
 package app
 
 import (
-	"hson-server/internal/datatree"
-	"hson-server/internal/logger"
+	"hjson-server/internal/datatree"
+	"hjson-server/internal/logger"
 	"net/url"
 	"os"
 	"sync"
@@ -19,7 +19,7 @@ type App struct {
 }
 
 func (app *App) LoadDataFromFile() error {
-	// Get raw data from the hson / data file
+	// Get raw data from the hjson / data file
 	raw, err := os.ReadFile(app.FilePath)
 
 	if err != nil {
@@ -122,7 +122,7 @@ func (app *App) Delete(path string, q url.Values) error {
 		}
 	}
 
-	// Persist change back to hson file
+	// Persist change back to hjson file
 	return app.persist()
 }
 
@@ -134,12 +134,12 @@ func (app *App) persist() error {
 	defer atomic.StoreUint32(&app.SelfWriting, 0)
 
 	// Convert app data to HJSON encoded data
-	hsonBytes, err := hjson.Marshal(app.Data)
+	hjsonBytes, err := hjson.Marshal(app.Data)
 
 	if err != nil {
 		return err
 	}
 
 	// Write encoded data back to file at app.FilePath
-	return os.WriteFile(app.FilePath, hsonBytes, 0o644)
+	return os.WriteFile(app.FilePath, hjsonBytes, 0o644)
 }

@@ -1,5 +1,5 @@
 {
-  // HSON root object
+  // HJSON root object
   // Define your API data structure here
   // Using HJSON structure
 

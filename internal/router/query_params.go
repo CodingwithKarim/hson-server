@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"hson-server/internal/logger"
+	"hjson-server/internal/logger"
 	"net/url"
 	"sort"
 	"strconv"

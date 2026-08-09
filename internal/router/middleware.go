@@ -1,8 +1,8 @@
 package router
 
 import (
-	"hson-server/internal/config"
-	"hson-server/internal/logger"
+	"hjson-server/internal/config"
+	"hjson-server/internal/logger"
 	"net/http"
 	"path"
 	"time"

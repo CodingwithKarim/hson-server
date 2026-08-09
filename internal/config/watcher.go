@@ -1,14 +1,14 @@
 package config
 
 import (
-	"hson-server/internal/app"
-	"hson-server/internal/logger"
+	"hjson-server/internal/app"
+	"hjson-server/internal/logger"
 	"sync/atomic"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-func WatchHSONFile(app *app.App) {
+func WatchHJSONFile(app *app.App) {
 	// Init the live reload watcher
 	watcher, err := fsnotify.NewWatcher()
 
@@ -48,9 +48,9 @@ func WatchHSONFile(app *app.App) {
 				continue
 			}
 
-			logger.Info("Reloading HSON from disk")
+			logger.Info("Reloading HJSON from disk")
 
-			// Load data from HSON file to app memory
+			// Load data from HJSON file to app memory
 			if err := app.LoadDataFromFile(); err != nil {
 				logger.Error("Reload failed", "err", err)
 			}

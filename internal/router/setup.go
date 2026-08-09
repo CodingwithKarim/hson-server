@@ -1,20 +1,20 @@
 package router
 
 import (
-	"hson-server/internal/config"
+	"hjson-server/internal/config"
 	"net/http"
 	"net/url"
 )
 
-// HSONStore interface defines operations for reading/writing HSON data which is implemented in the app package
-type HSONStore interface {
+// HJSONStore interface defines operations for reading/writing HJSON data which is implemented in the app package
+type HJSONStore interface {
 	Read(path string) (any, error)
 	Write(path string, newVal any) error
 	Delete(path string, values url.Values) error
 	Patch(path string, patchData map[string]any) error
 }
 
-func NewHTTPHandler(store HSONStore, authConfig *config.AuthConfig) http.Handler {
+func NewHTTPHandler(store HJSONStore, authConfig *config.AuthConfig) http.Handler {
 	// Setup the HTTP routes and return the configured handler
 	handler := setupRoutes(store, authConfig)
 
@@ -29,7 +29,7 @@ func NewHTTPHandler(store HSONStore, authConfig *config.AuthConfig) http.Handler
 
 // Depending on the HTTP verb, we will dispatch its equivalent handler function
 // If HTTP verb is not supported, set the allow header and return an error to client
-func handlerDispatcher(store HSONStore) http.HandlerFunc {
+func handlerDispatcher(store HJSONStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -49,7 +49,7 @@ func handlerDispatcher(store HSONStore) http.HandlerFunc {
 	}
 }
 
-func setupRoutes(store HSONStore, authConfig *config.AuthConfig) *http.ServeMux {
+func setupRoutes(store HJSONStore, authConfig *config.AuthConfig) *http.ServeMux {
 	handler := http.NewServeMux()
 
 	// Register the cookie issue route if cookie authentication is enabled

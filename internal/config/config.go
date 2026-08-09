@@ -23,7 +23,7 @@ func Load() (*Config, error) {
 	// Parse application flags and initialize the configuration struct
 	cfg := parseAppFlags()
 
-	// Resolve the path to the HSON database file
+	// Resolve the path to the HJSON database file
 	resolvedPath, err := resolveDataFile(cfg.DBPath)
 
 	if err != nil {
@@ -47,42 +47,42 @@ func parseAppFlags() *Config {
 	flag.StringVar(
 		&cfg.DBPath,
 		"db",
-		envOrDefault("HSON_DB_PATH", "data.hson"),
-		"path to your HSON database file",
+		envOrDefault("HJSON_DB_PATH", "data.hjson"),
+		"path to your HJSON database file",
 	)
 
 	flag.StringVar(
 		&cfg.DBPath,
 		"database",
-		envOrDefault("HSON_DB_PATH", "data.hson"),
+		envOrDefault("HJSON_DB_PATH", "data.hjson"),
 		"alias for --db",
 	)
 
 	flag.StringVar(
 		&cfg.ServerPort,
 		"port",
-		envOrDefault("HSON_PORT", "3000"),
+		envOrDefault("HJSON_PORT", "3000"),
 		"port the server will listen on",
 	)
 
 	flag.BoolVar(
 		&cfg.LiveReload,
 		"live-reload",
-		envBoolOrDefault("HSON_LIVE_RELOAD", false),
-		"watch HSON file and reload on external changes",
+		envBoolOrDefault("HJSON_LIVE_RELOAD", false),
+		"watch HJSON file and reload on external changes",
 	)
 
 	flag.StringVar(
 		&cfg.LogLevel,
 		"log-level",
-		envOrDefault("HSON_LOG_LEVEL", "info"),
+		envOrDefault("HJSON_LOG_LEVEL", "info"),
 		"log level: debug, info, warn, error",
 	)
 
 	flag.BoolVar(
 		&cfg.IsLogVerbose,
 		"verbose",
-		envBoolOrDefault("HSON_VERBOSE", false),
+		envBoolOrDefault("HJSON_VERBOSE", false),
 		"enable verbose logging (adds file and line number and extra fields)",
 	)
 
@@ -92,14 +92,14 @@ func parseAppFlags() *Config {
 }
 
 func resolveDataFile(dbPath string) (string, error) {
-	if dbPath != "data.hson" {
+	if dbPath != "data.hjson" {
 		return dbPath, nil
 	}
 
-	path, err := resolveFile("data.hson")
+	path, err := resolveFile("data.hjson")
 
 	if err != nil {
-		return "", fmt.Errorf("no data.hson found in cwd or executable directory; specify a path using --db or --database")
+		return "", fmt.Errorf("no data.hjson found in cwd or executable directory; specify a path using --db or --database")
 	}
 
 	return path, nil

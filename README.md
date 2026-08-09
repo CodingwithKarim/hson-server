@@ -1,4 +1,4 @@
-<h1 align="center">HSON Server</h1>
+<h1 align="center">HJSON Server</h1>
 <p align="center"><em>Drop-in replacement for <a href="https://json-server.dev/" target="_blank">json-server</a> with <a href="https://hjson.github.io" target="_blank">HJSON</a> support, deep nesting, live reload, and structured logging.</em></p>
 
 <p align="center">
@@ -7,7 +7,7 @@
 
 ---
 
-**HSON Server** is a flexible HTTP server that loads data from a local .hson, .json, .txt, or any HJSON-compatible file, and instantly spins up a live REST API. Designed as a drop-in replacement for the popular <a href="https://json-server.dev/" target="_blank">json-server</a>, it supports deep nesting, advanced filtering, automatic file updates, live reload support, optional latency simulation, and styled logs powered by <a href="https://charm.sh/blog/the-charm-logger/" target="_blank">Charmbracelet</a>.
+**HJSON Server** is a flexible HTTP server that loads data from a local .hjson, .json, .txt, or any HJSON-compatible file, and instantly spins up a live REST API. Designed as a drop-in replacement for the popular <a href="https://json-server.dev/" target="_blank">json-server</a>, it supports deep nesting, advanced filtering, automatic file updates, live reload support, optional latency simulation, and styled logs powered by <a href="https://charm.sh/blog/the-charm-logger/" target="_blank">Charmbracelet</a>.
 
 No database setup. No schemas. Just point it at a file and run the server.
 
@@ -31,7 +31,7 @@ No database setup. No schemas. Just point it at a file and run the server.
 Supports all standard HTTP verbs (<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code>) ideal for mocking APIs and simulating backend services.
 
 🔹 **Flexible File Input**  
-Load data from <code>.hson</code>, <code>.json</code>, <code>.txt</code>, or any compatible file powered by the <a href="https://hjson.github.io" target="_blank">HJSON</a> parser.
+Load data from <code>.hjson</code>, <code>.json</code>, <code>.txt</code>, or any compatible file powered by the <a href="https://hjson.github.io" target="_blank">HJSON</a> parser.
 
 🔹 **Deep Nesting**  
 Access objects and arrays at any depth, with support for <code>id</code>-based lookups and fallback indexing when no <code>id</code> is present.
@@ -69,10 +69,10 @@ Simulate network latency with the delay query parameter (e.g. ?delay=2s). The se
 
 ```bash
 # Clone the repository (or download it as a ZIP from GitHub)
-git clone https://github.com/your-github-username/hson-server.git
+git clone https://github.com/your-github-username/hjson-server.git
 
 # Navigate into project directory where main.go is located
-cd hson-server
+cd hjson-server
 
 # Install required dependencies
 go mod tidy
@@ -83,14 +83,14 @@ go build
 # Run the server
 
 # For macOS / Linux
-./hson-server
+./hjson-server
 
 # For Windows
-.\hson-server.exe
+.\hjson-server.exe
 
 # With CLI args
 # Use either ./ or .\ to run executable depending on OS
-./hson-server --db=data.hson --port=5000 --live-reload --log-level=debug --verbose
+./hjson-server --db=data.hjson --port=5000 --live-reload --log-level=debug --verbose
 ```
 
 ---
@@ -100,14 +100,14 @@ go build
 After building the executable, run the server and customize behavior using CLI flags:
 
 ```bash
-hson-server [flags]
+hjson-server [flags]
 ```
 
 #### 🧩 Available Flags
 
 | Flag                   | Description                                                                                             |
 |------------------------|---------------------------------------------------------------------------------------------------------|
-| `--db`                 | Path to the data file (`.hson`, `.json`, `.txt`, etc). Defaults to `data.hson`.                        |
+| `--db`                 | Path to the data file (`.hjson`, `.json`, `.txt`, etc). Defaults to `data.hjson`.                        |
 | `--port`               | Port the server will listen on. Defaults to `3000`.                                                     |
 | `--live-reload`        | Enables live reload: syncs file changes to memory on-the-fly.                                           |
 | `--log-level`          | Sets the log level: `debug`, `info`, `warn`, `error`, `fatal`.                                          |
@@ -118,24 +118,24 @@ hson-server [flags]
 #### ▶️ Basic Run
 
 ```bash
-hson-server
+hjson-server
 ```
 
 #### ⚙️ Custom File and Port
 
 ```bash
-hson-server --db=mock_data.hson --port=8080
-hson-server --db="C:\Documents\mock-data.hson" --port=8080
+hjson-server --db=mock_data.hjson --port=8080
+hjson-server --db="C:\Documents\mock-data.hjson" --port=8080
 ```
 
 #### 🔄 Enable Live Reload + Logging
 
 ```bash
-hson-server --live-reload --log-level=debug --verbose
+hjson-server --live-reload --log-level=debug --verbose
 ```
 
-> 💡 On macOS/Linux, use `./hson-server`  
-> 💡 On Windows, use `.\hson-server.exe`
+> 💡 On macOS/Linux, use `./hjson-server`  
+> 💡 On Windows, use `.\hjson-server.exe`
 
 You can mix and match CLI flags as needed.
 
@@ -143,7 +143,7 @@ You can mix and match CLI flags as needed.
 
 ## API Guide
 
-Once the server is running, you can interact with it using standard HTTP methods. The API structure mirrors your data file (by default data.hson), with collections, nested objects, and array items are all mapped to RESTful routes.
+Once the server is running, you can interact with it using standard HTTP methods. The API structure mirrors your data file (by default data.hjson), with collections, nested objects, and array items are all mapped to RESTful routes.
 
 ```http
 GET /                → Root (returns entire data file)
@@ -289,7 +289,7 @@ DELETE /tags?value=fiction
 
 ### 💾 Persistence Behavior
 
-- All write operations (`POST`, `PUT`, `PATCH`, `DELETE`) are automatically persisted to the original `.hson` or `.json` file.
+- All write operations (`POST`, `PUT`, `PATCH`, `DELETE`) are automatically persisted to the original `.hjson` or `.json` file.
 - `POST` appends any value (object, primitive, etc.) to an array. It only works on paths that resolve to arrays.
 - `PUT` is more flexible since it overwrites the entire value at the given path (including primitives, maps, or arrays).
 - `PATCH` only shallow-merges into existing **objects** (not arrays or primitives).
@@ -299,7 +299,7 @@ DELETE /tags?value=fiction
 
 ## Logging
 
-HSON Server includes structured, styled logging powered by [Charmbracelet Logger](https://charm.sh/blog/the-charm-logger/), with rich metadata and dynamic verbosity options.
+HJSON Server includes structured, styled logging powered by [Charmbracelet Logger](https://charm.sh/blog/the-charm-logger/), with rich metadata and dynamic verbosity options.
 
 #### 🧪 Default Log Format
 
@@ -326,7 +326,7 @@ Use the `--log-level` flag to control the minimum level of logs shown:
 | `fatal` | Critical errors only            |
 
 ```bash
-hson-server --log-level=debug
+hjson-server --log-level=debug
 ```
 
 ---
@@ -340,7 +340,7 @@ Add `--verbose` to include extended runtime metadata:
 - Process ID (PID)
 
 ```bash
-hson-server --verbose
+hjson-server --verbose
 ```
 
 Example output with verbose logging enabled:
@@ -368,10 +368,10 @@ Each cleaned path is logged transparently for debugging purposes.
 
 ## Use Cases
 
-HSON Server is ideal for a variety of development and testing scenarios:
+HJSON Server is ideal for a variety of development and testing scenarios:
 
 - **Frontend Prototyping**
-  → Mock out a backend using a local `.hson` or any HJSON compatible file. No DB or separate backend service required.
+  → Mock out a backend using a local `.hjson` or any HJSON compatible file. No DB or separate backend service required.
 
 - **API Mocking for Testing**
   → Simulate REST APIs with full CRUD support, nested paths, advanced filters, and controllable response delays using a simple data file.
@@ -383,10 +383,10 @@ HSON Server is ideal for a variety of development and testing scenarios:
   → Use simple HJSON files to teach REST API principles and JSON request/response structure without deploying backend service.
 
 - **Stubbing Microservices**
-  → Replace unavailable or unstable backend services with file based HSON server during development or integration testing if needed.
+  → Replace unavailable or unstable backend services with file based HJSON server during development or integration testing if needed.
 
 - **Quick Dev Tooling**
-  → Use HSON Server as a local config data store that you can treat like a mini local database without needing something like SQLite. Shoutout SQLite though.
+  → Use HJSON Server as a local config data store that you can treat like a mini local database without needing something like SQLite. Shoutout SQLite though.
 
 ---
 

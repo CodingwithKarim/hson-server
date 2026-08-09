@@ -26,7 +26,7 @@ func SetupSingleton(logLevel string, isVerbose bool) {
 		ReportTimestamp: isVerbose,
 		Level:           parseLogLevel(logLevel),
 		TimeFormat:      time.Kitchen,
-		Prefix:          lipgloss.NewStyle().Render("🚀 HSON Server"),
+		Prefix:          lipgloss.NewStyle().Render("🚀 HJSON Server"),
 		CallerFormatter: getCallerFormatter(),
 		CallerOffset:    1,
 	})

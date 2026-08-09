@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"hson-server/internal/app"
-	"hson-server/internal/config"
-	"hson-server/internal/logger"
-	"hson-server/internal/router"
+	"hjson-server/internal/app"
+	"hjson-server/internal/config"
+	"hjson-server/internal/logger"
+	"hjson-server/internal/router"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Parse command-line flags to get the HSON file path, server port to listen on, live-reloading option, and auth settings
+	// Parse command-line flags to get the HJSON file path, server port to listen on, live-reloading option, and auth settings
 	cfg, err := config.Load()
 
 	if err != nil {
@@ -31,15 +31,15 @@ func main() {
 		FilePath: cfg.DBPath,
 	}
 
-	// Load data from the HSON file into memory / app.Data
+	// Load data from the HJSON file into memory / app.Data
 	if err := app.LoadDataFromFile(); err != nil {
 		logger.Fatal("Failed to access the database file", "path", cfg.DBPath, "err", err)
 		os.Exit(1)
 	}
 
-	// Only watch HSON / data file for updates if live reload was requested
+	// Only watch HJSON / data file for updates if live reload was requested
 	if cfg.LiveReload {
-		go config.WatchHSONFile(app)
+		go config.WatchHJSONFile(app)
 		logger.Info("Live‐reload enabled: watching", "file", cfg.DBPath)
 	}
 
@@ -54,11 +54,11 @@ func main() {
 
 	// Start the HTTP server in a background goroutine so can handle shutdown signals below
 	go func() {
-		logger.Info("Starting HSON Server", "port", cfg.ServerPort, "data file", cfg.DBPath)
+		logger.Info("Starting HJSON Server", "port", cfg.ServerPort, "data file", cfg.DBPath)
 
 		// Start serving HTTP requests
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("HSON Server failed to listen and serve", "port", cfg.ServerPort, "err", err)
+			logger.Fatal("HJSON Server failed to listen and serve", "port", cfg.ServerPort, "err", err)
 			os.Exit(1)
 		}
 	}()
@@ -78,6 +78,6 @@ func main() {
 	if err := server.Shutdown(context.Background()); err != nil {
 		logger.Error("Graceful shutdown failed, forcing exit", "err", err)
 	} else {
-		logger.Info("🌙  HSON Server shutdown complete. See you next time!")
+		logger.Info("🌙  HJSON Server shutdown complete. See you next time!")
 	}
 }

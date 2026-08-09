@@ -2,9 +2,9 @@ package router
 
 import (
 	"encoding/json"
-	"hson-server/internal/config"
-	"hson-server/internal/datatree"
-	"hson-server/internal/logger"
+	"hjson-server/internal/config"
+	"hjson-server/internal/datatree"
+	"hjson-server/internal/logger"
 	"net/http"
 	"path"
 	"reflect"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func handleGetRequest(store HSONStore) http.HandlerFunc {
+func handleGetRequest(store HJSONStore) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		start := time.Now()
 
@@ -87,7 +87,7 @@ func handleGetRequest(store HSONStore) http.HandlerFunc {
 	}
 }
 
-func handlePostRequest(store HSONStore) http.HandlerFunc {
+func handlePostRequest(store HJSONStore) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		start := time.Now()
 
@@ -198,7 +198,7 @@ func handlePostRequest(store HSONStore) http.HandlerFunc {
 	}
 }
 
-func handlePutRequest(store HSONStore) http.HandlerFunc {
+func handlePutRequest(store HJSONStore) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		start := time.Now()
 
@@ -250,7 +250,7 @@ func handlePutRequest(store HSONStore) http.HandlerFunc {
 	}
 }
 
-func handlePatchRequest(store HSONStore) http.HandlerFunc {
+func handlePatchRequest(store HJSONStore) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		start := time.Now()
 
@@ -302,7 +302,7 @@ func handlePatchRequest(store HSONStore) http.HandlerFunc {
 	}
 }
 
-func handleDeleteRequest(store HSONStore) http.HandlerFunc {
+func handleDeleteRequest(store HJSONStore) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		start := time.Now()
 
