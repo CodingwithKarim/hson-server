@@ -1,263 +1,257 @@
 <h1 align="center">HJSON Server</h1>
-<p align="center"><em>Drop-in replacement for <a href="https://json-server.dev/" target="_blank">json-server</a> with <a href="https://hjson.github.io" target="_blank">HJSON</a> support, deep nesting, live reload, and structured logging.</em></p>
 
-<p align="center">
-  ⚡ Lightweight · 💾 File-backed · 🌱 JSON/HJSON Compatible · 🧪 Built for Mock APIs
-</p>
+<p align="center"><em>A lightweight, file-backed REST API server powered by HJSON—built for local development, frontend prototyping, API mocking, and integration testing.</em></p>
 
----
-
-**HJSON Server** is a flexible HTTP server that loads data from a local .hjson, .json, .txt, or any HJSON-compatible file, and instantly spins up a live REST API. Designed as a drop-in replacement for the popular <a href="https://json-server.dev/" target="_blank">json-server</a>, it supports deep nesting, advanced filtering, automatic file updates, live reload support, optional latency simulation, and styled logs powered by <a href="https://charm.sh/blog/the-charm-logger/" target="_blank">Charmbracelet</a>.
-
-No database setup. No schemas. Just point it at a file and run the server.
+<p align="center">⚡ Lightweight · 💾 File-backed · 🔐 Configurable Auth · 🌱 JSON/HJSON Compatible · 🔄 Live Reload · 🔒 Optional HTTPS</p>
 
 ---
 
 ## Table of Contents
 
+- [Overview](#overview)
 - [Features](#features)
 - [Getting Started](#getting-started)
-- [Usage](#usage)
-- [API Guide](#api-guide)
+  - [Prerequisites](#prerequisites)
+  - [Install and Build](#install-and-build)
+  - [Run the Server](#run-the-server)
+- [Configuration](#configuration)
+  - [Configuration Priority](#configuration-priority)
+  - [CLI Flags](#cli-flags)
+  - [Environment Variables](#environment-variables)
+- [API Reference](#api-reference)
+  - [Resource Routing](#resource-routing)
+  - [GET—Retrieve Data](#getretrieve-data)
+  - [POST—Append to an Array](#postappend-to-an-array)
+  - [PUT—Replace a Value](#putreplace-a-value)
+  - [PATCH—Update Object Fields](#patchupdate-object-fields)
+  - [DELETE—Remove Data](#deleteremove-data)
+  - [Query Parameters](#query-parameters)
+- [Authentication](#authentication)
+  - [Protected Routes](#protected-routes)
+  - [Bearer Authentication](#bearer-authentication)
+  - [Basic Authentication](#basic-authentication)
+  - [API Key Authentication](#api-key-authentication)
+  - [Cookie Authentication](#cookie-authentication)
+- [Browser and HTTPS Support](#browser-and-https-support)
+  - [CORS](#cors)
+  - [HTTPS with Caddy](#https-with-caddy)
+- [Persistence and Live Reload](#persistence-and-live-reload)
 - [Logging](#logging)
+  - [Log Levels](#log-levels)
+  - [Verbose Mode](#verbose-mode)
 - [Use Cases](#use-cases)
 - [License](#license)
 
 ---
 
+## Overview
+
+**HJSON Server** turns a local HJSON-compatible data file into a REST API with CRUD operations, nested resources, filtering, sorting, pagination, authentication, live reload, structured logging, latency simulation, environment-based configuration, browser-friendly CORS, and optional HTTPS through Caddy.
+
+No database setup. No schemas. Point the server at a file and start building.
+
+---
+
 ## Features
 
-🔹 **Drop-In JSON Server Alternative**  
-Supports all standard HTTP verbs (<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code>) ideal for mocking APIs and simulating backend services.
-
-🔹 **Flexible File Input**  
-Load data from <code>.hjson</code>, <code>.json</code>, <code>.txt</code>, or any compatible file powered by the <a href="https://hjson.github.io" target="_blank">HJSON</a> parser.
-
-🔹 **Deep Nesting**  
-Access objects and arrays at any depth, with support for <code>id</code>-based lookups and fallback indexing when no <code>id</code> is present.
-
-🔹 **Query Parameters**  
- Supports filtering by any object field or primitive value (<code>?value=foo</code>), sorting by any key (<code>?sort=key</code> or <code>?sort=-key</code>), and pagination using <code>?page=N&limit=M</code> or <code>?offset=K&limit=M</code>.
- 
-🔹 **Automatic File Persistence**  
-All changes made through the API are instantly written to the original data file. No database or manual saving is required.
-
-🔹 **Live Reload Mode**  
-Optional live reload syncs data file changes immediately to memory. Great for making manual edits without restarting the server.
-
-🔹 **Configurable via CLI**  
-Customize port, data file, log level, and toggle live reload or verbose logging using command-line flags.
-
-🔹 **Styled Logging**  
-Clean, structured logs powered by <a href="https://charm.sh/blog/the-charm-logger/" target="_blank">Charmbracelet Logger</a> with support for log levels, timestamps, and verbosity option.
-
-🔹 **Clean Middleware & Routing**  
-Automatically normalizes messy or invalid paths like <code>////api////books///1///</code> into clean, valid routes like <code>/api/books/1</code>.
-
-🔹 **Response Delay (Latency Simulation)**  
-Simulate network latency with the delay query parameter (e.g. ?delay=2s). The server waits before processing using standard Go duration formats, with built-in safety and cancellation handling.
+- **REST API from HJSON** — Use `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` against file-backed data.
+- **Flexible file input** — Work with `.hjson`, `.json`, `.txt`, or other HJSON-compatible files.
+- **Deep nesting** — Traverse object keys, `id` lookups, array indexes, and nested resources.
+- **Query support** — Filter, sort, paginate, offset, and simulate latency.
+- **Automatic persistence** — Write mutating requests back to the configured data file.
+- **Live reload** — Reload external data-file edits without restarting the server.
+- **Four authentication strategies** — Choose Bearer, Basic, API key, or Cookie authentication.
+- **Protected routes** — Configure which routes require authentication through `auth.hjson`.
+- **Browser cookie issuance** — Configure a route that responds with `Set-Cookie` for browser testing.
+- **CLI and `.env` configuration** — Let CLI flags override environment values and built-in defaults.
+- **Localhost CORS support** — Connect browser frontends running on arbitrary `localhost` or `127.0.0.1` ports, including credentialed requests.
+- **Optional HTTPS with Caddy** — Proxy HTTPS traffic to the Go application for local secure-context testing.
+- **Structured logging** — Configure log levels and optional verbose runtime metadata.
+- **URL normalization** — Normalize malformed paths before routing.
 
 ---
 
 ## Getting Started
 
-#### 🔧 Prerequisites
+### Prerequisites
 
-- Go / Golang
+- Go
+- Optional: Caddy for local HTTPS
 
-#### 🛠 Installation
+---
+
+### Install and Build
 
 ```bash
-# Clone the repository (or download it as a ZIP from GitHub)
 git clone https://github.com/your-github-username/hjson-server.git
-
-# Navigate into project directory where main.go is located
 cd hjson-server
 
-# Install required dependencies
 go mod tidy
-
-# Build the executable
 go build
+```
 
-# Run the server
+---
 
-# For macOS / Linux
+### Run the Server
+
+```bash
+# macOS / Linux
 ./hjson-server
 
-# For Windows
-.\hjson-server.exe
+# Windows
+.\\hjson-server.exe
+```
 
-# With CLI args
-# Use either ./ or .\ to run executable depending on OS
+Run with custom options:
+
+```bash
 ./hjson-server --db=data.hjson --port=5000 --live-reload --log-level=debug --verbose
 ```
 
 ---
 
-## Usage
+## Configuration
 
-After building the executable, run the server and customize behavior using CLI flags:
-
-```bash
-hjson-server [flags]
-```
-
-#### 🧩 Available Flags
-
-| Flag                   | Description                                                                                             |
-|------------------------|---------------------------------------------------------------------------------------------------------|
-| `--db`                 | Path to the data file (`.hjson`, `.json`, `.txt`, etc). Defaults to `data.hjson`.                        |
-| `--port`               | Port the server will listen on. Defaults to `3000`.                                                     |
-| `--live-reload`        | Enables live reload: syncs file changes to memory on-the-fly.                                           |
-| `--log-level`          | Sets the log level: `debug`, `info`, `warn`, `error`, `fatal`.                                          |
-| `--verbose`            | Enables verbose logging: includes uptime, PID, goroutines, etc.                                         |
+HJSON Server supports CLI flags, environment variables, and `.env` files.
 
 ---
 
-#### ▶️ Basic Run
+### Configuration Priority
 
-```bash
-hjson-server
+Configuration values are resolved in this order, from highest to lowest priority:
+
+1. CLI flags
+2. Environment variables or `.env`
+3. Built-in defaults
+
+For example, if `.env` contains:
+
+```env
+HJSON_PORT=3000
 ```
 
-#### ⚙️ Custom File and Port
+Then this command runs the server on port `8080` because the explicit CLI flag takes priority:
 
 ```bash
-hjson-server --db=mock_data.hjson --port=8080
-hjson-server --db="C:\Documents\mock-data.hjson" --port=8080
+./hjson-server --port=8080
 ```
-
-#### 🔄 Enable Live Reload + Logging
-
-```bash
-hjson-server --live-reload --log-level=debug --verbose
-```
-
-> 💡 On macOS/Linux, use `./hjson-server`  
-> 💡 On Windows, use `.\hjson-server.exe`
-
-You can mix and match CLI flags as needed.
 
 ---
 
-## API Guide
+### CLI Flags
 
-Once the server is running, you can interact with it using standard HTTP methods. The API structure mirrors your data file (by default data.hjson), with collections, nested objects, and array items are all mapped to RESTful routes.
+| Flag | Description | Default |
+| --- | --- | --- |
+| `--db` | Path to the HJSON-compatible data file. | `data.hjson` |
+| `--database` | Alias for `--db`. | `data.hjson` |
+| `--port` | Port used by the Go HTTP server. | `3000` |
+| `--live-reload` | Reload the data file when it changes externally. | `false` |
+| `--log-level` | Set the log level to `debug`, `info`, `warn`, or `error`. | `info` |
+| `--verbose` | Enable additional runtime logging metadata. | `false` |
 
-```http
-GET /                → Root (returns entire data file)
-GET /books           → Collection (array)
-GET /books/1         → Single item (by `id` if available, or by index fallback)
-GET /users/42/posts  → Nested resource (supports deep nesting)
-```
-
-#### Lookups support:
-- id-based match (if object contains `"id"`)
-- fallback to index (e.g., `/books/0`)
-- deep chaining of object keys, id matches, and array indexes
-
-#### 🔎 Query Parameters
-
-Advanced query parameters allow filtering, sorting, and pagination on any collection or array.
-
-```http
-GET /[collection]?[key]=[value]&sort=[field]&limit=[N]&offset=[K]&delay[duration]
-```
-
-#### 🧩 Supported Parameters
-
-| Parameter           | Description                                                                |
-|---------------------|----------------------------------------------------------------------------|
-| `?key=value`        | Filter results by matching any field or value.                             |
-| `?value=foo`        | Match against primitive values or object fields equal to `foo`.            |
-| `?sort=key`         | Sort results in ascending order by `key`.                                  |
-| `?sort=-key`        | Sort results in descending order by `key`.                                 |
-| `?page=N&limit=M`   | Paginate results using page-based logic (1-indexed).                       |
-| `?offset=K&limit=M` | Paginate using offset-based logic (0-indexed).                             |
-| `?delay=2s`         | Delay request processing to simulate network latency.                      |
-
-#### ▶️ Filtering Examples
-
-```http
-GET /books?author=Asimov
-GET /users?role=admin
-GET /products?inStock=true
-GET /tags?0=fiction
-GET /users?delay=5s
-```
 ---
 
-### 📥 GET – Retrieve Data
+### Environment Variables
 
-Fetch entire collections, specific items, or nested data.
+Example `.env` file:
+
+```env
+HJSON_DB_PATH=data.hjson
+HJSON_PORT=3000
+HJSON_LIVE_RELOAD=false
+HJSON_LOG_LEVEL=info
+HJSON_VERBOSE=false
+```
+
+| Variable | Description |
+| --- | --- |
+| `HJSON_DB_PATH` | Data-file path. |
+| `HJSON_PORT` | Server port. |
+| `HJSON_LIVE_RELOAD` | Enable or disable live reload. |
+| `HJSON_LOG_LEVEL` | Logging level. |
+| `HJSON_VERBOSE` | Enable or disable verbose logging. |
+
+---
+
+## API Reference
+
+### Resource Routing
+
+The API structure mirrors the configured data file:
 
 ```http
+GET /                → entire data file
+GET /books           → collection
+GET /books/1         → item by id, with index fallback
+GET /users/42/posts  → nested resource
+```
+
+Resource lookups support:
+
+- Object keys
+- `id`-based array matching
+- Array-index fallback
+- Deep chaining of keys, IDs, and indexes
+
+---
+
+### GET—Retrieve Data
+
+Retrieve the entire data file, a collection, an individual item, or a nested resource:
+
+```http
+GET /
 GET /books
 GET /books/1
 GET /users/42/posts
 ```
 
-Supports:
-- Full object lookups by `id`
-- Fallback indexing for arrays when ID prop is not found
-- Deep nesting through chained keys, ID matches, and indexes.
 ---
 
-### ➕ POST – Append to a Collection
-
-Use `POST` to append any value to an array at a given path. The server accepts any type as an appended value but the URL path must point to an array.
+### POST—Append to an Array
 
 ```http
 POST /books
+Content-Type: application/json
 ```
-
-#### 📦 Request Body
 
 ```json
 {
   "title": "New Book",
   "author": "Jane Doe",
-  "year": 2025
+  "year": 2026
 }
 ```
 
-💡 Appends the value to the `/books` array.
+The target path must resolve to an array.
 
 ---
 
-### ✏️ PUT – Replace Value at a Path
-
-Use `PUT` to overwrite the value at a specific path. Can replace entire arrays, objects, or primitive values.
+### PUT—Replace a Value
 
 ```http
 PUT /books/1
-PUT /data/settings/theme
+Content-Type: application/json
 ```
-
-#### 📦 Request Body
 
 ```json
 {
   "title": "Updated Book",
   "author": "Jane Doe",
-  "year": 2024
+  "year": 2026
 }
 ```
 
-💡 Fully replaces whatever is currently at the target path with the request body.
+`PUT` can replace objects, arrays, or primitive values.
 
 ---
 
-### 🔧 PATCH – Update Object Fields
-
-Use `PATCH` to shallow merge fields into an existing object. Only works for maps (objects) and not for arrays or primitives.
+### PATCH—Update Object Fields
 
 ```http
 PATCH /books/1
+Content-Type: application/json
 ```
-
-#### 📦 Request Body
 
 ```json
 {
@@ -265,17 +259,11 @@ PATCH /books/1
 }
 ```
 
-💡 Merges fields into the object at `/books/1`.
+`PATCH` shallow-merges fields into an existing object.
 
 ---
 
-### 🗑️ DELETE – Remove Data
-
-Use `DELETE` to remove:
-
-- A single object by ID or index
-- Filtered objects (bulk delete)
-- Primitive array values
+### DELETE—Remove Data
 
 ```http
 DELETE /books/1
@@ -283,112 +271,361 @@ DELETE /books?author=Unknown
 DELETE /tags?value=fiction
 ```
 
-💡 Filter-based deletes respect the same rules as GET as you can delete by any field or primitive match.
+Filter-based deletes use the same matching rules as filtered `GET` requests.
 
 ---
 
-### 💾 Persistence Behavior
+### Query Parameters
 
-- All write operations (`POST`, `PUT`, `PATCH`, `DELETE`) are automatically persisted to the original `.hjson` or `.json` file.
-- `POST` appends any value (object, primitive, etc.) to an array. It only works on paths that resolve to arrays.
-- `PUT` is more flexible since it overwrites the entire value at the given path (including primitives, maps, or arrays).
-- `PATCH` only shallow-merges into existing **objects** (not arrays or primitives).
-- ⚠️ Live-reload only applies to **manual edits** to the file. Edits made via the API do not trigger reloads (to prevent infinite write loops).
+| Parameter | Description |
+| --- | --- |
+| `?key=value` | Filter objects by field and value. |
+| `?value=foo` | Match primitive values or matching object values. |
+| `?sort=key` | Sort in ascending order. |
+| `?sort=-key` | Sort in descending order. |
+| `?page=N&limit=M` | Use page-based pagination. |
+| `?offset=K&limit=M` | Use offset-based pagination. |
+| `?delay=2s` | Add artificial response latency. |
+
+Examples:
+
+```http
+GET /books?author=Asimov
+GET /users?role=admin
+GET /products?inStock=true
+GET /books?sort=title
+GET /books?sort=-year
+GET /books?page=2&limit=10
+GET /books?offset=20&limit=10
+GET /books?delay=2s
+```
+
+---
+
+## Authentication
+
+Authentication is configured through a separate `auth.hjson` file. It controls:
+
+- Whether authentication is enabled
+- Which authentication strategy is active
+- Which routes are protected
+- The credentials and settings for each strategy
+- Cookie issuance behavior for browser clients
+
+Example:
+
+```hjson
+{
+    enabled: true
+
+    // Supported: basic, bearer, api-key, cookie
+    type: "cookie"
+
+    protectedRoutes: [
+        "/settings"
+    ]
+
+    basic: {
+        username: "admin"
+        password: "password"
+    }
+
+    bearer: {
+        token: "my-local-api-key"
+    }
+
+    apiKey: {
+        header: "X-API-Key"
+        value: "my-local-api-key"
+    }
+
+    cookie: {
+        issueRoute: "/auth/cookie"
+        name: "session"
+        value: "my-local-session"
+    }
+}
+```
+
+Only the strategy selected by `type` is used for protected requests.
+
+> [!WARNING]
+> `auth.hjson` is intended for development configuration. Do not commit real production credentials or secrets.
+
+---
+
+### Protected Routes
+
+Configure the routes that require authentication:
+
+```hjson
+protectedRoutes: [
+    "/settings"
+    "/admin"
+]
+```
+
+Unprotected routes continue normally.
+
+---
+
+### Bearer Authentication
+
+Configuration:
+
+```hjson
+type: "bearer"
+
+bearer: {
+    token: "my-local-api-key"
+}
+```
+
+Client request:
+
+```http
+Authorization: Bearer my-local-api-key
+```
+
+---
+
+### Basic Authentication
+
+Configuration:
+
+```hjson
+type: "basic"
+
+basic: {
+    username: "admin"
+    password: "password"
+}
+```
+
+Client request:
+
+```http
+Authorization: Basic <base64(username:password)>
+```
+
+---
+
+### API Key Authentication
+
+Configuration:
+
+```hjson
+type: "api-key"
+
+apiKey: {
+    header: "X-API-Key"
+    value: "my-local-api-key"
+}
+```
+
+Client request:
+
+```http
+X-API-Key: my-local-api-key
+```
+
+The API-key header name is configurable.
+
+---
+
+### Cookie Authentication
+
+Cookie authentication supports both validating an incoming cookie and issuing that cookie to a browser.
+
+Configuration:
+
+```hjson
+type: "cookie"
+
+cookie: {
+    issueRoute: "/auth/cookie"
+    name: "session"
+    value: "my-local-session"
+}
+```
+
+Issue the cookie:
+
+```http
+POST /auth/cookie
+```
+
+The server responds with a `Set-Cookie` header. A browser can then include that cookie in later protected requests.
+
+```js
+fetch("http://localhost:3000/auth/cookie", {
+  method: "POST",
+  credentials: "include"
+});
+```
+
+Then access a protected route:
+
+```js
+fetch("http://localhost:3000/settings", {
+  credentials: "include"
+});
+```
+
+---
+
+## Browser and HTTPS Support
+
+### CORS
+
+HJSON Server supports browser frontends running on arbitrary local development ports. For example:
+
+```text
+Frontend:     http://localhost:5173
+HJSON Server: http://localhost:3000
+```
+
+The browser automatically sends:
+
+```http
+Origin: http://localhost:5173
+```
+
+If the origin is local, the server responds with the exact requesting origin:
+
+```http
+Access-Control-Allow-Origin: http://localhost:5173
+Access-Control-Allow-Credentials: true
+```
+
+This allows credentialed browser requests without hardcoding a specific frontend port. Supported local origins can include:
+
+```text
+http://localhost:5173
+http://localhost:5500
+http://localhost:8080
+http://127.0.0.1:4200
+```
+
+The server also handles browser `OPTIONS` preflight requests before they reach the normal request dispatcher.
+
+> [!NOTE]
+> CORS is a browser security mechanism. It does not prevent `curl`, Postman, Go clients, or other backend services from sending requests to the server.
+
+---
+
+### HTTPS with Caddy
+
+HJSON Server can run behind a Caddy reverse proxy for local HTTPS development:
+
+```text
+Browser or client → HTTPS → Caddy → HJSON Server on localhost:3000
+```
+
+Example `Caddyfile`:
+
+```caddyfile
+localhost:8443 {
+    tls internal
+    reverse_proxy localhost:3000
+}
+```
+
+Run HJSON Server normally:
+
+```bash
+./hjson-server --port=3000
+```
+
+Then access it through Caddy:
+
+```text
+https://localhost:8443
+```
+
+Local HTTPS is useful when testing:
+
+- Browser features that require a secure context
+- HTTPS-only application behavior
+- Encrypted local traffic
+- Clients that expect an HTTPS backend
+
+If another device connects to the proxy over a local network, that device must trust the development certificate authority or certificate used by Caddy.
+
+---
+
+## Persistence and Live Reload
+
+All mutating operations are persisted to the configured data file:
+
+- `POST`
+- `PUT`
+- `PATCH`
+- `DELETE`
+
+Enable live reload with:
+
+```bash
+./hjson-server --live-reload
+```
+
+External writes to the data file are then reloaded into memory without restarting the server.
+
+Writes initiated by HJSON Server itself are ignored by the live-reload path so the server does not react to its own persistence operations.
 
 ---
 
 ## Logging
 
-HJSON Server includes structured, styled logging powered by [Charmbracelet Logger](https://charm.sh/blog/the-charm-logger/), with rich metadata and dynamic verbosity options.
+HJSON Server uses Charmbracelet Logger for structured logging.
 
-#### 🧪 Default Log Format
+### Log Levels
 
-Each incoming HTTP request is logged with key metadata:
-
-```log
-[INFO] GET /books
-→ method=GET path=/books duration=2ms
-```
-
-![image](https://github.com/user-attachments/assets/6fbf4767-aca1-49b5-9a81-8aba6153a81d)
-
-
-#### ⚙️ Log Levels
-
-Use the `--log-level` flag to control the minimum level of logs shown:
-
-| Level   | Description                      |
-|---------|----------------------------------|
-| `debug` | Most verbose, includes all logs |
-| `info`  | Default, shows normal activity  |
-| `warn`  | Warnings or unexpected states   |
-| `error` | Only errors and failures        |
-| `fatal` | Critical errors only            |
+Set a log level when starting the server:
 
 ```bash
-hjson-server --log-level=debug
+./hjson-server --log-level=debug
 ```
+
+| Level | Description |
+| --- | --- |
+| `debug` | Detailed diagnostic information. |
+| `info` | Normal application activity. |
+| `warn` | Unexpected or potentially problematic states. |
+| `error` | Request or application failures. |
 
 ---
 
-#### 🔍 Verbose Mode
+### Verbose Mode
 
-Add `--verbose` to include extended runtime metadata:
+```bash
+./hjson-server --verbose
+```
+
+Verbose mode can add metadata such as:
 
 - Uptime
+- Process ID
 - Goroutine count
-- Process ID (PID)
+- Caller information
 
-```bash
-hjson-server --verbose
-```
-
-Example output with verbose logging enabled:
-
-```log
-[INFO] GET /books
-→ method=GET path=/books status=200 duration=3ms uptime=42s pid=1042 goroutines=6
-```
-![image](https://github.com/user-attachments/assets/11610138-4ed2-49cc-a1d5-2897699d5fd2)
-
-
----
-
-#### 🧼 Clean Paths
-
-The logger also auto-cleans malformed or messy URL paths:
-
-```http
-////api////books///1/// → /api/books/1
-```
-
-Each cleaned path is logged transparently for debugging purposes.
+Authentication secrets such as bearer tokens, passwords, API keys, and cookie values should never be written to logs.
 
 ---
 
 ## Use Cases
 
-HJSON Server is ideal for a variety of development and testing scenarios:
-
-- **Frontend Prototyping**
-  → Mock out a backend using a local `.hjson` or any HJSON compatible file. No DB or separate backend service required.
-
-- **API Mocking for Testing**
-  → Simulate REST APIs with full CRUD support, nested paths, advanced filters, and controllable response delays using a simple data file.
-
-- **Live API Demos**
-  → Build interactive UI demos with a realistic backend feel using live data updates, structured logs, and optional latency simulation.
-
-- **Teaching / Workshops**
-  → Use simple HJSON files to teach REST API principles and JSON request/response structure without deploying backend service.
-
-- **Stubbing Microservices**
-  → Replace unavailable or unstable backend services with file based HJSON server during development or integration testing if needed.
-
-- **Quick Dev Tooling**
-  → Use HJSON Server as a local config data store that you can treat like a mini local database without needing something like SQLite. Shoutout SQLite though.
+- **Frontend prototyping** — Build against a realistic local REST backend without setting up a database.
+- **API mocking** — Simulate CRUD, nested resources, filtering, pagination, authentication, and latency.
+- **Authentication testing** — Exercise Bearer, Basic, API-key, and cookie-based clients.
+- **Browser development** — Connect frontend development servers running on arbitrary localhost ports.
+- **HTTPS development** — Test local secure-context behavior through Caddy.
+- **Integration testing** — Replace unavailable or incomplete backend services with deterministic local data.
+- **Teaching and workshops** — Demonstrate REST, authentication, headers, persistence, and client/server interaction with minimal setup.
+- **Quick local data store** — Use an HJSON file as a lightweight backing store when a database would be unnecessary.
 
 ---
 
 ## License
-This project is licensed under the **MIT License**. See [here](https://mit-license.org/) for details.
+
+This project is licensed under the **MIT License**.
