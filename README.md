@@ -516,31 +516,55 @@ The server also handles browser `OPTIONS` preflight requests before they reach t
 
 ### HTTPS with Caddy
 
-HJSON Server can run behind a Caddy reverse proxy for local HTTPS development:
+HJSON Server can run behind a Caddy reverse proxy when local development requires HTTPS:
 
 ```text
 Browser or client → HTTPS → Caddy → HJSON Server on localhost:3000
 ```
 
-Example `Caddyfile`:
+Add the HTTP and HTTPS ports to `.env`:
+
+```env
+HJSON_PORT=3000
+HJSON_HTTPS_PORT=3443
+```
+
+Create a `Caddyfile` in the project root:
 
 ```caddyfile
-localhost:8443 {
+localhost:{$HJSON_HTTPS_PORT:3443} {
     tls internal
-    reverse_proxy localhost:3000
+    reverse_proxy localhost:{$HJSON_PORT:3000}
 }
 ```
 
-Run HJSON Server normally:
+The values after `:` are defaults. Caddy uses port `3443` for HTTPS and forwards requests to HJSON Server on port `3000` when the corresponding variables are not set.
+
+Start HJSON Server:
 
 ```bash
 ./hjson-server --port=3000
 ```
 
-Then access it through Caddy:
+In a second terminal, start Caddy and explicitly load the variables from `.env`:
+
+```bash
+caddy run --envfile .env
+```
+
+> [!IMPORTANT]
+> Caddy does not load the project's `.env` file unless it is passed through `--envfile` or the variables are already defined in the shell environment.
+
+The API is now available through HTTPS:
 
 ```text
-https://localhost:8443
+https://localhost:3443/books
+```
+
+Because `tls internal` uses Caddy's local certificate authority, the browser may initially display a certificate warning. Trust Caddy's local CA with:
+
+```bash
+caddy trust
 ```
 
 Local HTTPS is useful when testing:
@@ -549,8 +573,6 @@ Local HTTPS is useful when testing:
 - HTTPS-only application behavior
 - Encrypted local traffic
 - Clients that expect an HTTPS backend
-
-If another device connects to the proxy over a local network, that device must trust the development certificate authority or certificate used by Caddy.
 
 ---
 
