@@ -1,4 +1,4 @@
-localhost:{$HJSON_HTTPS_PORT} {
+localhost:{$HJSON_HTTPS_PORT:3443} {
     tls internal
-    reverse_proxy localhost:{$HJSON_PORT}
+    reverse_proxy localhost:{$HJSON_PORT:3000}
 }
