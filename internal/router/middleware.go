@@ -5,7 +5,6 @@ import (
 	"hson-server/internal/logger"
 	"net/http"
 	"path"
-	"strings"
 	"time"
 )
 
@@ -16,24 +15,9 @@ func addAuth(next http.Handler, authConfig *config.AuthConfig) http.Handler {
 			return
 		}
 
-		authHeader := r.Header.Get("Authorization")
+		authStrategy, ok := authStrategies[authConfig.Type]
 
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			logger.Error("Bearer prefix is missing from authorization header", "auth_header", authHeader, "url_path", r.URL.Path)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		apiKeyFromHeader := strings.TrimPrefix(authHeader, "Bearer ")
-
-		if apiKeyFromHeader == "" {
-			logger.Error("Bearer api key is missing from authorization header", "auth_header", authHeader, "url_path", r.URL.Path)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		if apiKeyFromHeader != authConfig.APIKey {
-			logger.Error("Invalid bearer api key", "auth_header", authHeader, "url_path", r.URL.Path, "api_key_from_header", apiKeyFromHeader, "expected_api_key", authConfig.APIKey)
+		if !ok || !authStrategy(r, authConfig) {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -44,21 +28,18 @@ func addAuth(next http.Handler, authConfig *config.AuthConfig) http.Handler {
 
 func addCORSAndNormalizeURL(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Clean URL path from request
+		// Normalize URL path
 		r.URL.Path = path.Clean("/" + r.URL.Path)
 
-		// Set necessary CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+		// Set CORS headers for the response
+		setCORSHeaders(w, r)
 
-		// Handle potential OPTIONS requests from browsers
+		// Handle browser CORS preflight requests
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 
-		// Call the next handler
 		next.ServeHTTP(w, r)
 	})
 }

@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"hson-server/internal/config"
 	"hson-server/internal/datatree"
 	"hson-server/internal/logger"
 	"net/http"
@@ -339,5 +340,31 @@ func handleDeleteRequest(store HSONStore) http.HandlerFunc {
 			"status", http.StatusNoContent,
 			"request_duration", time.Since(start),
 		)
+	}
+}
+
+func handleIssueCookie(authConfig *config.AuthConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.Header().Set("Allow", http.MethodPost)
+			logger.Error("Method not allowed. Only POST is allowed.", "path", r.URL.Path, "method", r.Method)
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     authConfig.Cookie.Name,
+			Value:    authConfig.Cookie.Value,
+			Path:     "/",
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		})
+
+		logger.Info("Issued cookie to clients",
+			"path", r.URL.Path,
+			"cookie_name", authConfig.Cookie.Name,
+		)
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

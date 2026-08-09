@@ -3,11 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
 
-	"github.com/hjson/hjson-go/v4"
 	"github.com/joho/godotenv"
 )
 
@@ -20,48 +16,29 @@ type Config struct {
 	Auth         *AuthConfig
 }
 
-type AuthConfig struct {
-	Enabled         bool     `json:"enabled"`
-	APIKey          string   `json:"apiKey"`
-	ProtectedRoutes []string `json:"protectedRoutes"`
-}
-
 func Load() (*Config, error) {
+	// Load environment variables from a .env file if it exists
 	_ = godotenv.Load()
 
+	// Parse application flags and initialize the configuration struct
 	cfg := parseAppFlags()
 
+	// Resolve the path to the HSON database file
 	resolvedPath, err := resolveDataFile(cfg.DBPath)
 
 	if err != nil {
 		return nil, err
 	}
 
+	// Update the configuration struct with the resolved database file path
 	cfg.DBPath = resolvedPath
 
+	// Load and validate the authentication configuration from auth.hjson
 	if err := loadAuthData(cfg); err != nil {
 		return nil, err
 	}
 
 	return cfg, nil
-}
-
-func loadAuthData(cfg *Config) error {
-	raw, err := os.ReadFile("auth.hson")
-
-	if err != nil {
-		return err
-	}
-
-	var data AuthConfig
-
-	if err := hjson.Unmarshal(raw, &data); err != nil {
-		return err
-	}
-
-	cfg.Auth = &data
-
-	return nil
 }
 
 func parseAppFlags() *Config {
@@ -119,50 +96,11 @@ func resolveDataFile(dbPath string) (string, error) {
 		return dbPath, nil
 	}
 
-	if _, err := os.Stat("data.hson"); err == nil {
-		abs, err := filepath.Abs("data.hson")
-		if err != nil {
-			return "", err
-		}
-		return abs, nil
-	}
-
-	exePath, err := os.Executable()
+	path, err := resolveFile("data.hson")
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("no data.hson found in cwd or executable directory; specify a path using --db or --database")
 	}
 
-	exeDir := filepath.Dir(exePath)
-	fallback := filepath.Join(exeDir, "data.hson")
-
-	if _, err := os.Stat(fallback); err == nil {
-		return fallback, nil
-	}
-
-	return "", fmt.Errorf("No data.hson found in cwd or executable directory. Please specify a path to your HSON file using the --db or --database flag.")
-}
-
-func envOrDefault(key, fallback string) string {
-	value := os.Getenv(key)
-
-	if value == "" {
-		return fallback
-	}
-	return value
-}
-
-func envBoolOrDefault(key string, fallback bool) bool {
-	value := os.Getenv(key)
-
-	if value == "" {
-		return fallback
-	}
-
-	parsed, err := strconv.ParseBool(value)
-	if err != nil {
-		return fallback
-	}
-
-	return parsed
+	return path, nil
 }
