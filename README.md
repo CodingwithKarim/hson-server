@@ -46,9 +46,9 @@
 
 ## Overview
 
-**HJSON Server** turns a local HJSON-compatible data file into a REST API with CRUD operations, nested resources, filtering, sorting, pagination, authentication, live reload, structured logging, latency simulation, environment-based configuration, browser-friendly CORS, and optional HTTPS through Caddy.
+**HJSON Server** turns a local HJSON-compatible data file into a fully featured REST API. It supports CRUD operations, nested resources, filtering, sorting, pagination, authentication, live reload, structured logging, latency simulation, browser-friendly CORS, and optional HTTPS through Caddy.
 
-No database setup. No schemas. Point the server at a file and start building.
+No database setup or schemas required. Just point the server at a file and start building.
 
 ---
 
