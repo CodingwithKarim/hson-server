@@ -1,14 +1,38 @@
 <h1 align="center">HJSON Server</h1>
 
-<p align="center"><em>A lightweight, file-backed REST API server powered by HJSON—built for local development, frontend prototyping, API mocking, and integration testing.</em></p>
+<p align="center">
+  <em>
+    A lightweight fully customizable REST API server built for local development,
+    frontend prototyping, API mocking, and integration testing. Powered by 
+    <a href="https://hjson.github.io/">HJSON</a>.
+  </em>
+</p>
 
-<p align="center">⚡ Lightweight · 💾 File-backed · 🔐 Configurable Auth · 🌱 JSON/HJSON Compatible · 🔄 Live Reload · 🔒 Optional HTTPS</p>
+<p align="center">
+  💾 File-backed •
+  🔐 Customizable Auth •
+  🌱 JSON /<a href="https://hjson.github.io/"> HJSON</a> Compatible •
+  🔄 Live Reload •
+  ✨ <a href="https://charm.land/blog/the-charm-logger/">Charm</a> powered logging •
+  🔒 Optional <a href="https://caddyserver.com/">HTTPS</a>
+</p>
+
+---
+
+## Overview
+
+**HJSON Server** turns a simple local data file into a powerful, ready-to-use REST API giving you the behavior of a backend without the overhead of building one from scratch. 
+
+Built as a modern alternative to <a href="https://github.com/typicode/json-server"> JSON Server</a>, HJSON Server keeps the simplicity of a file-backed API while adding more flexibility, control, and developer focused features.
+
+Define your data in <a href="https://hjson.github.io/">HJSON</a> or JSON and immediately get CRUD operations, nested resources, filtering, sorting, pagination, configurable authentication, live reload, latency simulation, browser-friendly CORS, <a href="https://github.com/charmbracelet/log">Charm</a>-powered structured logging, and optional HTTPS through <a href="https://caddyserver.com/">Caddy</a>.
+
+No database. No schema migrations. No backend boilerplate. **Write the data. Start the server. Build against the API.**
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
 - [Features](#features)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -41,14 +65,6 @@
   - [Verbose Mode](#verbose-mode)
 - [Use Cases](#use-cases)
 - [License](#license)
-
----
-
-## Overview
-
-**HJSON Server** turns a local HJSON-compatible data file into a fully featured REST API. It supports CRUD operations, nested resources, filtering, sorting, pagination, authentication, live reload, structured logging, latency simulation, browser-friendly CORS, and optional HTTPS through Caddy.
-
-No database setup or schemas required. Just point the server at a file and start building.
 
 ---
 
